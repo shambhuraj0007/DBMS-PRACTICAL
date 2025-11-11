@@ -1,0 +1,43 @@
+SQL> SET SERVEROUTPUT ON
+SQL>
+SQL> CREATE TABLE areas(radius NUMBER, area NUMBER);
+
+
+
+SQL>
+SQL> DECLARE
+  2      radius_var NUMBER;
+  3      area_var NUMBER;
+  4      pi NUMBER := 3.14;
+  5  BEGIN
+  6      FOR radius_var IN 5 .. 9 LOOP
+  7          area_var := pi*radius_var*radius_var;
+  8          dbms_output.put_line(area_var);
+  9          INSERT INTO areas VALUES (radius_var, area_var);
+ 10      END LOOP;
+ 11  END;
+ 12  /
+78.5
+113.04
+153.86
+200.96
+254.34
+
+PL/SQL procedure successfully completed.
+
+SQL> select * from areas;
+
+    RADIUS       AREA
+---------- ----------
+         5       78.5
+         6     113.04
+         7     153.86
+         8     200.96
+         9     254.34
+         5       78.5
+         6     113.04
+         7     153.86
+         8     200.96
+         9     254.34
+
+10 rows selected.
