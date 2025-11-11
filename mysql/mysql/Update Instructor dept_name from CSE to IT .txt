@@ -1,0 +1,141 @@
+-- Create instructor table to store instructor information
+CREATE TABLE instructor (
+    T_ID INT PRIMARY KEY,
+    name VARCHAR(50),
+    dept_name VARCHAR(50),
+    salary DECIMAL(10,2)
+);
+
+-- Create course table to store course details
+CREATE TABLE course (
+    course_id VARCHAR(10) PRIMARY KEY,
+    title VARCHAR(100),
+    dept_name VARCHAR(50),
+    credits INT
+);
+
+-- Create student table to store student information
+CREATE TABLE student (
+    S_ID INT PRIMARY KEY,
+    name VARCHAR(50),
+    dept_name VARCHAR(50),
+    tot_cred INT
+);
+
+-- Create teaches table to map instructors to courses they teach
+CREATE TABLE teaches (
+    T_ID INT,
+    course_id VARCHAR(10),
+    sec_id VARCHAR(5),
+    semester VARCHAR(20),
+    year INT,
+    PRIMARY KEY (T_ID, course_id, sec_id, semester, year),
+    FOREIGN KEY (T_ID) REFERENCES instructor(T_ID),
+    FOREIGN KEY (course_id) REFERENCES course(course_id)
+);
+
+-- ========================================
+-- INSERT SAMPLE DATA - INSTRUCTORS
+-- ========================================
+
+-- Insert instructors with varying salaries (some above 25000, some below)
+INSERT INTO instructor VALUES (1, 'Shreekanth', 'CSE', 75000);
+INSERT INTO instructor VALUES (2, 'Rajesh', 'Civil', 60000);
+INSERT INTO instructor VALUES (3, 'Shreeya', 'CSE', 50000);
+INSERT INTO instructor VALUES (4, 'Amit', 'Civil', 20000);
+INSERT INTO instructor VALUES (5, 'Priya', 'Electrical', 45000);
+INSERT INTO instructor VALUES (6, 'Shreeram', 'CSE', 85000);
+INSERT INTO instructor VALUES (7, 'Ramesh', 'Mechanical', 55000);
+INSERT INTO instructor VALUES (8, 'Kavita', 'Electrical', 30000);
+
+-- ========================================
+-- INSERT SAMPLE DATA - COURSES
+-- ========================================
+
+-- Insert courses from different departments
+INSERT INTO course VALUES ('CS101', 'Database Systems', 'CSE', 4);
+INSERT INTO course VALUES ('CS201', 'Data Structures', 'CSE', 3);
+INSERT INTO course VALUES ('CE101', 'Construction', 'Civil', 4);
+INSERT INTO course VALUES ('EE101', 'Circuits', 'Electrical', 3);
+INSERT INTO course VALUES ('CS301', 'Algorithms', 'CSE', 4);
+INSERT INTO course VALUES ('ME101', 'Thermodynamics', 'Mechanical', 4);
+
+-- ========================================
+-- INSERT SAMPLE DATA - STUDENTS
+-- ========================================
+
+-- Insert student records
+INSERT INTO student VALUES (101, 'Ankit', 'CSE', 45);
+INSERT INTO student VALUES (102, 'Neha', 'Civil', 60);
+INSERT INTO student VALUES (103, 'Rahul', 'Electrical', 50);
+INSERT INTO student VALUES (104, 'Priyanka', 'CSE', 75);
+
+-- ========================================
+-- INSERT SAMPLE DATA - TEACHES
+-- ========================================
+
+-- Map instructors to courses they teach with section, semester, and year details
+INSERT INTO teaches VALUES (1, 'CS101', 'A', 'First', 2010);
+INSERT INTO teaches VALUES (2, 'CE101', 'B', 'First', 2010);
+INSERT INTO teaches VALUES (3, 'CS201', 'A', 'Fifth', 2014);
+INSERT INTO teaches VALUES (5, 'EE101', 'C', 'First', 2010);
+INSERT INTO teaches VALUES (6, 'CS301', 'A', 'Fifth', 2014);
+INSERT INTO teaches VALUES (1, 'CS201', 'B', 'Second', 2011);
+INSERT INTO teaches VALUES (7, 'ME101', 'A', 'Third', 2012);
+
+-- ========================================
+-- QUERY i: Find names of all instructors whose salary is greater than 25000
+-- ========================================
+
+SELECT name
+FROM instructor
+WHERE salary > 25000;
+
+-- ========================================
+-- QUERY ii: Update Instructor dept_name from CSE to IT
+-- ========================================
+
+UPDATE instructor
+SET dept_name = 'IT'
+WHERE dept_name = 'CSE';
+
+-- Verify the update
+SELECT * FROM instructor;
+
+-- ========================================
+-- QUERY iii: Create Simple Index on course table on dept_name attribute
+-- Then find department wise courses
+-- ========================================
+
+-- Create index on dept_name column for faster retrieval
+CREATE INDEX idx_dept_name ON course(dept_name);
+
+-- Show indexes on course table (verification)
+SHOW INDEX FROM course;
+
+-- Find department wise courses using the indexed column
+SELECT dept_name, course_id, title, credits
+FROM course
+ORDER BY dept_name, course_id;
+
+-- ========================================
+-- QUERY iv: Create a View to retrieve instructor data with course details
+-- View includes: instructor info + course, section, semester, year details
+-- ========================================
+
+-- Create view joining instructor and teaches tables
+CREATE VIEW instructor_course_details AS
+SELECT 
+    i.T_ID,
+    i.name AS instructor_name,
+    i.dept_name,
+    i.salary,
+    t.course_id,
+    t.sec_id,
+    t.semester,
+    t.year
+FROM instructor i
+INNER JOIN teaches t ON i.T_ID = t.T_ID;
+
+-- Retrieve data from the view
+SELECT * FROM instructor_course_details;

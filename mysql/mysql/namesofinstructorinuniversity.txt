@@ -1,0 +1,156 @@
+-- Create instructor table
+CREATE TABLE instructor (
+    T_ID VARCHAR(10) PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    dept_name VARCHAR(30),
+    salary DECIMAL(10, 2)
+);
+
+-- Create course table
+CREATE TABLE course (
+    course_id VARCHAR(10) PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    dept_name VARCHAR(30),
+    credits INT
+);
+
+-- Create student table
+CREATE TABLE student (
+    S_ID VARCHAR(10) PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    dept_name VARCHAR(30),
+    tot_cred INT
+);
+
+-- Create teaches table
+CREATE TABLE teaches (
+    T_ID VARCHAR(10),
+    course_id VARCHAR(10),
+    sec_id VARCHAR(10),
+    semester VARCHAR(10),
+    year INT,
+    PRIMARY KEY (T_ID, course_id, sec_id, semester, year),
+    FOREIGN KEY (T_ID) REFERENCES instructor(T_ID),
+    FOREIGN KEY (course_id) REFERENCES course(course_id)
+);
+
+-- ============================================
+-- DATA INSERTION
+-- ============================================
+
+-- Insert data into instructor table
+INSERT INTO instructor (T_ID, name, dept_name, salary) VALUES
+('T001', 'Dr. Rajesh Kumar', 'Computer Science', 75000.00),
+('T002', 'Dr. Priya Sharma', 'Computer Science', 45000.00),
+('T003', 'Dr. Amit Patel', 'Mathematics', 55000.00),
+('T004', 'Dr. Sneha Reddy', 'Physics', 35000.00),
+('T005', 'Dr. Vikram Singh', 'Computer Science', 85000.00),
+('T006', 'Dr. Anita Desai', 'Mathematics', 42000.00),
+('T007', 'Dr. Rohan Mehta', 'Physics', 65000.00),
+('T008', 'Dr. Kavita Joshi', 'Chemistry', 50000.00),
+('T009', 'Dr. Sanjay Gupta', 'Computer Science', 95000.00),
+('T010', 'Dr. Neha Agarwal', 'Mathematics', 38000.00);
+
+-- Insert data into course table
+INSERT INTO course (course_id, title, dept_name, credits) VALUES
+('101', 'Introduction to Programming', 'Computer Science', 4),
+('102', 'Data Structures', 'Computer Science', 4),
+('103', 'Database Management Systems', 'Computer Science', 3),
+('201', 'Calculus I', 'Mathematics', 4),
+('202', 'Linear Algebra', 'Mathematics', 3),
+('301', 'Classical Mechanics', 'Physics', 3),
+('302', 'Quantum Physics', 'Physics', 4),
+('401', 'Organic Chemistry', 'Chemistry', 3);
+
+-- Insert data into student table (including some with NULL dept_name)
+INSERT INTO student (S_ID, name, dept_name, tot_cred) VALUES
+('S001', 'Rahul Verma', 'Computer Science', 45),
+('S002', 'Anjali Singh', 'Mathematics', 38),
+('S003', 'Pradeep Kumar', 'Physics', 52),
+('S004', 'Swati Jain', 'Computer Science', 60),
+('S005', 'Arjun Reddy', NULL, 15),
+('S006', 'Meera Patel', 'Chemistry', 42),
+('S007', 'Karan Malhotra', 'Mathematics', 48),
+('S008', 'Divya Sharma', NULL, 10),
+('S009', 'Rohit Desai', 'Computer Science', 55),
+('S010', 'Pooja Agarwal', 'Physics', 40),
+('S011', 'Nikhil Gupta', NULL, 8),
+('S012', 'Simran Kaur', 'Mathematics', 50);
+
+-- Insert data into teaches table
+INSERT INTO teaches (T_ID, course_id, sec_id, semester, year) VALUES
+('T001', '101', 'S1', 'Fall', 2024),
+('T001', '102', 'S1', 'Spring', 2024),
+('T002', '101', 'S2', 'Spring', 2024),
+('T002', '103', 'S1', 'Fall', 2024),
+('T003', '201', 'S1', 'Fall', 2024),
+('T003', '202', 'S1', 'Spring', 2024),
+('T004', '301', 'S1', 'Fall', 2024),
+('T005', '102', 'S2', 'Fall', 2024),
+('T006', '201', 'S2', 'Spring', 2024),
+('T007', '302', 'S1', 'Spring', 2024),
+('T007', '301', 'S2', 'Fall', 2024),
+('T008', '401', 'S1', 'Fall', 2024),
+('T008', '401', 'S2', 'Spring', 2024),
+('T009', '103', 'S2', 'Fall', 2024),
+('T010', '202', 'S2', 'Fall', 2024);
+
+-- ============================================
+-- QUERY SOLUTIONS
+-- ============================================
+
+-- ============================================
+-- QUERY i: Find the names of the instructor in the university 
+-- who have taught the courses semester wise
+-- ============================================
+
+SELECT 
+    i.name AS instructor_name,
+    t.course_id,
+    c.title AS course_title,
+    t.semester,
+    t.year
+FROM instructor i
+JOIN teaches t ON i.T_ID = t.T_ID
+JOIN course c ON t.course_id = c.course_id
+ORDER BY t.year, t.semester, i.name;
+
+
+-- ============================================
+-- QUERY ii: Create View on single table which retrieves 
+-- student details
+-- ============================================
+
+CREATE VIEW student_details AS
+SELECT 
+    S_ID,
+    name,
+    dept_name,
+    tot_cred
+FROM student;
+
+-- Verify the view
+SELECT * FROM student_details;
+
+
+-- ============================================
+-- QUERY iii: Rename the column of table student 
+-- from dept_name to department_name
+-- ============================================
+
+ALTER TABLE student
+CHANGE COLUMN dept_name department_name VARCHAR(30);
+
+-- Verify the column rename
+DESC student;
+
+
+-- ============================================
+-- QUERY iv: Delete student name whose department is NULL
+-- ============================================
+
+DELETE FROM student
+WHERE department_name IS NULL;
+
+-- Verify deletion
+SELECT * FROM student;

@@ -1,0 +1,126 @@
+//Collection “city” which contains the documents given as below(Perform on Mongo Terminal) { } city: “pune”, type: “urban”, state: “MH”, population: 5600000 -using mapreduce, find statewise population -using mapreduce, find citywise population -using mapreduce, find typewise population.  
+
+use citydb; 
+
+db.city.insertMany([ { city: "pune", type: "urban", state: "MH", population: 5600000 }, { city: "mumbai", type: "urban", state: "MH", population: 12400000 }, { city: "nagpur", type: "urban", state: "MH", population: 2400000 }, { city: "delhi", type: "urban", state: "DL", population: 11000000 }, { city: "bangalore", type: "urban", state: "KA", population: 8400000 }, { city: "village1", type: "rural", state: "MH", population: 50000 } ]); 
+
+db.city.find(); 
+
+//query1- Statewise Population using MapReduce 
+
+ 
+
+var mapState = function() { emit(this.state, parseInt(this.population)); }; // Define reduce function  
+
+var reduceState = function(key, values) { return Array.sum(values); }; 
+
+ // Execute MapReduce  
+
+db.city.mapReduce( mapState, reduceState, { out: "statewise_population" } ); // View results  
+
+db.statewise_population.find(); 
+
+// Citywise Population using MapReduce query-2 
+
+ 
+
+// Define map function 
+
+var mapCity = function() { 
+
+  emit(this.city, parseInt(this.population)); 
+
+}; 
+
+  
+
+// Define reduce function 
+
+var reduceCity = function(key, values) { 
+
+  return Array.sum(values); 
+
+}; 
+
+  
+
+// Execute MapReduce 
+
+db.city.mapReduce( 
+
+  mapCity, 
+
+  reduceCity, 
+
+  { out: "citywise_population" } 
+
+); 
+
+  
+
+// View results 
+
+db.citywise_population.find(); 
+
+ 
+
+// Query 3: Typewise Population using MapReduce 
+
+// Define map function 
+
+var mapType = function() { 
+
+  emit(this.type, parseInt(this.population)); 
+
+}; 
+
+  
+
+// Define reduce function 
+
+var reduceType = function(key, values) { 
+
+  return Array.sum(values); 
+
+}; 
+
+  
+
+// Execute MapReduce 
+
+db.city.mapReduce( 
+
+  mapType, 
+
+  reduceType, 
+
+  { out: "typewise_population" } 
+
+); 
+
+  
+
+// View results 
+
+db.typewise_population.find(); 
+
+🧠 MapReduce kar kya raha hai?
+
+MapReduce do parts me kaam karta hai:
+
+Map Function:
+
+Ye har document (city) ko padhta hai.
+
+Aur har document ke liye ek “pair” (key, value) emit karta hai.
+
+Yahaan key = state, value = population hai.
+🔹 Example: Pune se ("MH", 5600000) emit hoga.
+
+Reduce Function:
+
+Ye same key (state) ke saare values ko add karta hai.
+
+Jaise MH ke liye 56, 124, 24 sab add ho jaayenge.
+
+Result: MH → 20400000

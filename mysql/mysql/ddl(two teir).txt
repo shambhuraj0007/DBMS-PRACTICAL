@@ -1,0 +1,156 @@
+-- =======================================================
+-- DATABASE CREATION
+-- =======================================================
+CREATE DATABASE company_system;
+USE company_system;
+
+-- =======================================================
+-- TABLE CREATION (DDL)
+-- =======================================================
+
+CREATE TABLE Employee (
+    e_no INT PRIMARY KEY,
+    e_name VARCHAR(50) NOT NULL,
+    post VARCHAR(50),
+    pay_rate DECIMAL(10,2) CHECK (pay_rate > 0)
+);
+
+CREATE TABLE Position (
+    pos_no INT PRIMARY KEY,
+    post VARCHAR(50) UNIQUE NOT NULL
+);
+
+CREATE TABLE Duty_alloc (
+    pos_no INT,
+    e_no INT,
+    month VARCHAR(20),
+    year INT,
+    shift VARCHAR(20),
+    FOREIGN KEY (pos_no) REFERENCES Position(pos_no) ON DELETE CASCADE,
+    FOREIGN KEY (e_no) REFERENCES Employee(e_no) ON DELETE CASCADE
+);
+
+-- =======================================================
+-- INSERT SAMPLE DATA
+-- =======================================================
+INSERT INTO Position VALUES
+(1, 'Manager'),
+(2, 'Engineer'),
+(3, 'Technician');
+
+INSERT INTO Employee VALUES
+(101, 'Anjali', 'Manager', 55000),
+(102, 'Rohan', 'Engineer', 40000),
+(103, 'Sneha', 'Engineer', 42000),
+(104, 'Amit', 'Technician', 30000),
+(105, 'Suresh', 'Manager', 60000);
+
+INSERT INTO Duty_alloc VALUES
+(1, 101, 'April', 2023, 'First'),
+(2, 102, 'April', 2023, 'Second'),
+(3, 104, 'May', 2023, 'First'),
+(1, 105, 'April', 2023, 'Third');
+
+-- =======================================================
+-- i. CREATE VIEW THAT DISPLAYS FIRST THREE COLUMNS OF EMPLOYEE TABLE
+-- =======================================================
+CREATE VIEW emp_basic_view AS
+SELECT e_no, e_name, post
+FROM Employee;
+
+SELECT * FROM emp_basic_view;
+
+-- OUTPUT:
+-- +------+---------+------------+
+-- | e_no | e_name  | post       |
+-- +------+---------+------------+
+-- | 101  | Anjali  | Manager    |
+-- | 102  | Rohan   | Engineer   |
+-- | 103  | Sneha   | Engineer   |
+-- | 104  | Amit    | Technician |
+-- | 105  | Suresh  | Manager    |
+-- +------+---------+------------+
+
+-- =======================================================
+-- ii. CREATE VIEW THAT DISPLAYS LEFT OUTER JOIN ON EMPLOYEE & POSITION TABLES ON post
+-- =======================================================
+CREATE VIEW emp_position_view AS
+SELECT e.e_no, e.e_name, e.post AS emp_post, p.pos_no, p.post AS pos_post
+FROM Employee e
+LEFT JOIN Position p ON e.post = p.post;
+
+SELECT * FROM emp_position_view;
+
+-- OUTPUT:
+-- +------+---------+-----------+--------+-----------+
+-- | e_no | e_name  | emp_post  | pos_no | pos_post  |
+-- +------+---------+-----------+--------+-----------+
+-- | 101  | Anjali  | Manager   | 1      | Manager   |
+-- | 102  | Rohan   | Engineer  | 2      | Engineer  |
+-- | 103  | Sneha   | Engineer  | 2      | Engineer  |
+-- | 104  | Amit    | Technician| 3      | Technician|
+-- | 105  | Suresh  | Manager   | 1      | Manager   |
+-- +------+---------+-----------+--------+-----------+
+
+-- (Displays all employees, and position info if available)
+
+-- =======================================================
+-- iii. CREATE INDEX ON pos_no ATTRIBUTE OF POSITION TABLE
+-- =======================================================
+CREATE INDEX idx_posno ON Position(pos_no);
+
+-- To verify:
+SHOW INDEX FROM Position;
+
+-- OUTPUT:
+-- +----------+------------+----------+--------------+-------------+
+-- | Table    | Non_unique | Key_name | Seq_in_index | Column_name |
+-- +----------+------------+----------+--------------+-------------+
+-- | Position | 0          | PRIMARY  | 1            | pos_no      |
+-- | Position | 1          | idx_posno| 1            | pos_no      |
+-- +----------+------------+----------+--------------+-------------+
+
+-- (Index created successfully on pos_no)
+
+-- =======================================================
+-- iv. BASED ON INDEXED COLUMN FIRE THE QUERIES
+-- =======================================================
+
+-- 🔹 a) Fetch all details from Position using indexed column pos_no
+SELECT * FROM Position WHERE pos_no = 2;
+
+-- OUTPUT:
+-- +--------+-----------+
+-- | pos_no | post      |
+-- +--------+-----------+
+-- | 2      | Engineer  |
+-- +--------+-----------+
+
+-- 🔹 b) Fetch duty details for all employees having pos_no < 3 (uses index lookup)
+SELECT d.pos_no, e.e_name, e.post, d.shift, d.month, d.year
+FROM Duty_alloc d
+JOIN Employee e ON d.e_no = e.e_no
+WHERE d.pos_no < 3;
+
+-- OUTPUT:
+-- +--------+---------+-----------+--------+-------+------+
+-- | pos_no | e_name  | post      | shift  | month | year |
+-- +--------+---------+-----------+--------+-------+------+
+-- | 1      | Anjali  | Manager   | First  | April | 2023 |
+-- | 2      | Rohan   | Engineer  | Second | April | 2023 |
+-- | 1      | Suresh  | Manager   | Third  | April | 2023 |
+-- +--------+---------+-----------+--------+-------+------+
+
+-- (Query benefits from the index on pos_no)
+
+-- 🔹 c) Sort positions using indexed column
+SELECT * FROM Position ORDER BY pos_no;
+
+-- OUTPUT:
+-- +--------+-------------+
+-- | pos_no | post        |
+-- +--------+-------------+
+-- | 1      | Manager     |
+-- | 2      | Engineer    |
+-- | 3      | Technician  |
+-- +--------+-------------+

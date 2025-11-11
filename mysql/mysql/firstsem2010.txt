@@ -1,0 +1,64 @@
+CREATE TABLE instructor (
+    T_ID INT PRIMARY KEY,
+    name VARCHAR(50),
+    dept_name VARCHAR(50),
+    salary DECIMAL(10,2)
+);
+
+CREATE TABLE course (
+    course_id VARCHAR(10) PRIMARY KEY,
+    title VARCHAR(100),
+    dept_name VARCHAR(50),
+    credits INT
+);
+
+CREATE TABLE student (
+    S_ID INT PRIMARY KEY,
+    name VARCHAR(50),
+    dept_name VARCHAR(50),
+    tot_cred INT
+);
+
+CREATE TABLE teaches (
+    T_ID INT,
+    course_id VARCHAR(10),
+    sec_id VARCHAR(5),
+    semester VARCHAR(20),
+    year INT,
+    PRIMARY KEY (T_ID, course_id, sec_id, semester, year),
+    FOREIGN KEY (T_ID) REFERENCES instructor(T_ID),
+    FOREIGN KEY (course_id) REFERENCES course(course_id)
+);
+
+INSERT INTO instructor VALUES (1, 'Shreekanth', 'Computer', 75000);
+INSERT INTO instructor VALUES (2, 'Rajesh', 'Civil', 60000);
+INSERT INTO instructor VALUES (3, 'Shreeya', 'Computer', 80000);
+INSERT INTO instructor VALUES (4, 'Amit', 'Civil', 55000);
+INSERT INTO instructor VALUES (5, 'Priya', 'Electrical', 70000);
+INSERT INTO instructor VALUES (6, 'Shreeram', 'Computer', 85000);
+INSERT INTO instructor VALUES (7, 'Ramesh', 'Civil', 65000);
+
+INSERT INTO course VALUES ('CS101', 'Database Systems', 'Computer', 4);
+INSERT INTO course VALUES ('CS201', 'Data Structures', 'Computer', 3);
+INSERT INTO course VALUES ('CE101', 'Construction', 'Civil', 4);
+INSERT INTO course VALUES ('EE101', 'Circuits', 'Electrical', 3);
+INSERT INTO course VALUES ('CS301', 'Algorithms', 'Computer', 4);
+
+INSERT INTO teaches VALUES (1, 'CS101', 'A', 'First', 2010);
+INSERT INTO teaches VALUES (2, 'CE101', 'B', 'First', 2010);
+INSERT INTO teaches VALUES (3, 'CS201', 'A', 'Fifth', 2014);
+INSERT INTO teaches VALUES (5, 'EE101', 'C', 'First', 2010);
+INSERT INTO teaches VALUES (6, 'CS301', 'A', 'Fifth', 2014);
+INSERT INTO teaches VALUES (1, 'CS201', 'B', 'Fifth', 2014);
+
+INSERT INTO student VALUES (101, 'Ankit', 'Computer', 45);
+INSERT INTO student VALUES (102, 'Neha', 'Civil', 60);
+INSERT INTO student VALUES (103, 'Rahul', 'Electrical', 50);
+
+SELECT COUNT(DISTINCT T_ID) AS total_instructors FROM teaches WHERE semester = 'First' AND year = 2010;
+
+SELECT name FROM instructor WHERE dept_name = 'Computer' AND name LIKE '%shree%';
+
+SELECT name FROM instructor WHERE salary > (SELECT AVG(salary) FROM instructor WHERE dept_name = 'Civil');
+
+SELECT DISTINCT course_id FROM teaches WHERE (semester = 'Fifth' AND year = 2014) OR (semester = 'First' AND year = 2010);

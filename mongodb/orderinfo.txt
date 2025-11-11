@@ -1,0 +1,299 @@
+// ========================================
+// COMPLETE MONGODB SCRIPT - ORDERINFO COLLECTION
+// All Query Sets with Indian Names
+// ========================================
+
+// Switch to database
+use university_db;
+
+// Drop collection if exists (for clean start)
+db.orderinfo.drop();
+
+// ========================================
+// INSERT SAMPLE DATA - ORDERINFO COLLECTION
+// ========================================
+
+// Insert multiple documents with Indian names
+db.orderinfo.insertMany([
+    { cust_id: 123, cust_name: "Rajesh Kumar", status: "A", price: 250 },
+    { cust_id: 124, cust_name: "Priya Sharma", status: "B", price: 450 },
+    { cust_id: 125, cust_name: "Amit Patel", status: "A", price: 800 },
+    { cust_id: 126, cust_name: "Sneha Reddy", status: "A", price: 150 },
+    { cust_id: 127, cust_name: "Vikram Singh", status: "B", price: 600 },
+    { cust_id: 128, cust_name: "Anita Desai", status: "A", price: 350 },
+    { cust_id: 129, cust_name: "Rahul Mehta", status: "C", price: 50 },
+    { cust_id: 130, cust_name: "Kavita Iyer", status: "A", price: 950 },
+    { cust_id: 131, cust_name: "Suresh Nair", status: "B", price: 300 },
+    { cust_id: 132, cust_name: "Deepa Joshi", status: "A", price: 500 }
+]);
+
+// Verify data insertion
+db.orderinfo.find().pretty();
+
+// ========================================
+// QUERY SET 1
+// ========================================
+
+// Query 1.i: Find total price for each customer and display in order of total price
+db.orderinfo.aggregate([
+    {
+        $group: {
+            _id: "$cust_name",
+            total_price: { $sum: "$price" }
+        }
+    },
+    {
+        $sort: { total_price: -1 }
+    }
+]);
+
+// Query 1.ii: Find distinct customer names
+db.orderinfo.distinct("cust_name");
+
+// Query 1.iii: Display price of customers whose status is 'A'
+db.orderinfo.find(
+    { status: "A" },
+    { cust_name: 1, price: 1, _id: 0 }
+);
+
+// Query 1.iv: Delete customers whose status is 'A' (CAUTION: This will delete data)
+// db.orderinfo.deleteMany({ status: "A" });
+// Commented out to preserve data - uncomment to execute
+
+// ========================================
+// QUERY SET 2
+// ========================================
+
+// Query 2.i: Find average price for each customer having status 'A'
+db.orderinfo.aggregate([
+    {
+        $match: { status: "A" }
+    },
+    {
+        $group: {
+            _id: "$cust_name",
+            average_price: { $avg: "$price" }
+        }
+    }
+]);
+
+// Query 2.ii: Display status of customers whose price lies between 100 and 1000
+db.orderinfo.find(
+    { price: { $gte: 100, $lte: 1000 } },
+    { cust_name: 1, status: 1, price: 1, _id: 0 }
+);
+
+// Query 2.iii: Display customer information without "_id"
+db.orderinfo.find(
+    {},
+    { _id: 0, cust_id: 1, cust_name: 1, status: 1, price: 1 }
+);
+
+// Query 2.iv: Create simple index on orderinfo collection
+db.orderinfo.createIndex({ cust_id: 1 });
+
+// Explain query performance BEFORE index (on another field)
+db.orderinfo.find({ cust_name: "Rajesh Kumar" }).explain("executionStats");
+
+// Create index on cust_name
+db.orderinfo.createIndex({ cust_name: 1 });
+
+// Explain query performance AFTER index
+db.orderinfo.find({ cust_name: "Rajesh Kumar" }).explain("executionStats");
+
+// View all indexes
+db.orderinfo.getIndexes();
+
+// ========================================
+// QUERY SET 3
+// ========================================
+
+// Query 3.i: Add "Age" field to orderinfo collection
+db.orderinfo.updateMany(
+    {},
+    {
+        $set: {
+            age: 30
+        }
+    }
+);
+
+// Update specific ages for variety
+db.orderinfo.updateOne({ cust_id: 123 }, { $set: { age: 35 } });
+db.orderinfo.updateOne({ cust_id: 124 }, { $set: { age: 28 } });
+db.orderinfo.updateOne({ cust_id: 125 }, { $set: { age: 42 } });
+db.orderinfo.updateOne({ cust_id: 126 }, { $set: { age: 25 } });
+db.orderinfo.updateOne({ cust_id: 127 }, { $set: { age: 38 } });
+
+// Verify age field addition
+db.orderinfo.find().pretty();
+
+// Query 3.ii: Create complex (compound) index on orderinfo collection
+db.orderinfo.createIndex({ status: 1, price: -1 });
+
+// Fire queries using compound index
+db.orderinfo.find({ status: "A", price: { $gte: 200 } }).sort({ price: -1 });
+
+// Drop duplicates (ensure unique constraint on cust_id)
+db.orderinfo.createIndex({ cust_id: 1 }, { unique: true });
+
+// View all indexes
+db.orderinfo.getIndexes();
+
+// Query 3.iii: Display average price for each customer grouped by status
+db.orderinfo.aggregate([
+    {
+        $group: {
+            _id: "$status",
+            average_price: { $avg: "$price" },
+            count: { $sum: 1 }
+        }
+    },
+    {
+        $sort: { _id: 1 }
+    }
+]);
+
+// Query 3.iv: Change customer's name whose status is "B"
+db.orderinfo.updateMany(
+    { status: "B" },
+    {
+        $set: { cust_name: "Updated Name" }
+    }
+);
+
+// Better approach: Update specific customers
+db.orderinfo.updateOne(
+    { cust_id: 124 },
+    { $set: { cust_name: "Priya Verma" } }
+);
+
+db.orderinfo.updateOne(
+    { cust_id: 127 },
+    { $set: { cust_name: "Vikram Rao" } }
+);
+
+// Verify updates
+db.orderinfo.find({ status: "B" }).pretty();
+
+// ========================================
+// QUERY SET 4
+// ========================================
+
+// Query 4.i: Display name of customer having price between 250 and 450
+db.orderinfo.find(
+    { price: { $gte: 250, $lte: 450 } },
+    { cust_name: 1, price: 1, _id: 0 }
+);
+
+// Query 4.ii: Increment price by 10 for cust_id 123 and decrement by 5 for cust_id 124
+db.orderinfo.updateOne(
+    { cust_id: 123 },
+    { $inc: { price: 10 } }
+);
+
+db.orderinfo.updateOne(
+    { cust_id: 124 },
+    { $inc: { price: -5 } }
+);
+
+// Verify price changes
+db.orderinfo.find(
+    { cust_id: { $in: [123, 124] } }
+).pretty();
+
+// Query 4.iii: Remove any one field from orderinfo collection
+db.orderinfo.updateMany(
+    {},
+    { $unset: { age: "" } }
+);
+
+// Verify field removal
+db.orderinfo.find().pretty();
+
+// Query 4.iv: Find name of customer whose status is A OR price is 250 or both
+db.orderinfo.find(
+    {
+        $or: [
+            { status: "A" },
+            { price: 250 }
+        ]
+    },
+    { cust_name: 1, status: 1, price: 1, _id: 0 }
+);
+
+// ========================================
+// FINAL QUERY SET - COMBINED REQUIREMENTS
+// ========================================
+
+// Query i: Find total price for each customer and display in order of total price
+db.orderinfo.aggregate([
+    {
+        $group: {
+            _id: "$cust_name",
+            total_price: { $sum: "$price" }
+        }
+    },
+    {
+        $sort: { total_price: -1 }
+    }
+]);
+
+// Query ii: Display average price for each customer grouped by status
+db.orderinfo.aggregate([
+    {
+        $group: {
+            _id: "$status",
+            average_price: { $avg: "$price" },
+            total_customers: { $sum: 1 },
+            total_price: { $sum: "$price" }
+        }
+    },
+    {
+        $sort: { _id: 1 }
+    }
+]);
+
+// Query iii: Create simple index on orderinfo collection
+db.orderinfo.createIndex({ price: 1 });
+
+// Query iv: Create complex (compound) index and fire queries
+db.orderinfo.createIndex({ cust_name: 1, status: 1, price: -1 });
+
+// Fire queries using compound index
+db.orderinfo.find({ cust_name: "Rajesh Kumar", status: "A" }).sort({ price: -1 });
+
+// Drop duplicates by creating unique index
+db.orderinfo.createIndex({ cust_id: 1 }, { unique: true, dropDups: true });
+
+// ========================================
+// UTILITY QUERIES
+// ========================================
+
+// View all documents
+db.orderinfo.find().pretty();
+
+// Count total documents
+db.orderinfo.countDocuments();
+
+// View all indexes
+db.orderinfo.getIndexes();
+
+// Drop specific index
+// db.orderinfo.dropIndex("index_name");
+
+// Drop all indexes except _id
+// db.orderinfo.dropIndexes();
+
+// ========================================
+// PERFORMANCE COMPARISON
+// ========================================
+
+// Check query execution stats without index
+db.orderinfo.find({ price: 500 }).explain("executionStats");
+
+// Create index
+db.orderinfo.createIndex({ price: 1 });
+
+// Check query execution stats with index
+db.orderinfo.find({ price: 500 }).explain("executionStats");

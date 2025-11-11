@@ -1,0 +1,417 @@
+-- ===================================
+-- DATABASE CREATION
+-- ===================================
+
+CREATE DATABASE university;
+USE university;
+
+-- ===================================
+-- TABLE CREATION WITH CONSTRAINTS
+-- ===================================
+
+CREATE TABLE instructor (
+    T_ID INT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    dept_name VARCHAR(50),
+    salary INT CHECK (salary > 0)
+);
+
+CREATE TABLE course (
+    course_id INT PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    dept_name VARCHAR(50) NOT NULL,
+    credits INT CHECK (credits > 0)
+);
+
+CREATE TABLE student (
+    S_ID INT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    dept_name VARCHAR(50),
+    tot_cred INT CHECK (tot_cred >= 0)
+);
+
+CREATE TABLE teaches (
+    T_ID INT,
+    course_id INT,
+    sec_id INT,
+    semester VARCHAR(20),
+    year INT CHECK (year >= 2000),
+    PRIMARY KEY (T_ID, course_id, sec_id, semester, year),
+    FOREIGN KEY (T_ID) REFERENCES instructor(T_ID) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES course(course_id) ON DELETE CASCADE
+);
+
+-- ===================================
+-- INSERT SAMPLE DATA
+-- ===================================
+
+INSERT INTO instructor VALUES
+(1, 'Anjali Shree', 'Computer', 55000),
+(2, 'Rohan', 'CSE', 27000),
+(3, 'Sneha', 'IT', 62000),
+(4, 'Shree Ram', 'Civil', 40000),
+(5, 'Amit', 'Computer', 30000);
+
+INSERT INTO course VALUES
+(101, 'DBMS', 'CSE', 4),
+(102, 'Networks', 'IT', 3),
+(103, 'Operating Systems', 'Computer', 4),
+(104, 'Structures', 'Civil', 3);
+
+INSERT INTO teaches VALUES
+(1, 101, 1, 'First', 2010),
+(2, 102, 1, 'Fifth', 2014),
+(3, 103, 1, 'First', 2010),
+(4, 104, 1, 'Fifth', 2014);
+
+INSERT INTO student VALUES
+(11, 'Neha', 'CSE', 120),
+(12, 'Ravi', NULL, 100),
+(13, 'Asha', 'IT', 130);
+
+-- ===================================
+-- QUERIES + EXPECTED OUTPUTS
+-- ===================================
+
+-- 1️⃣ Find names of instructors who taught courses semester-wise
+SELECT i.name, t.semester, t.year
+FROM instructor i
+JOIN teaches t ON i.T_ID = t.T_ID
+ORDER BY t.semester, t.year;
+
+-- Output:
+-- +-------------+-----------+------+
+-- | name        | semester  | year |
+-- +-------------+-----------+------+
+-- | Anjali Shree| First     | 2010 |
+-- | Sneha       | First     | 2010 |
+-- | Rohan       | Fifth     | 2014 |
+-- | Shree Ram   | Fifth     | 2014 |
+-- +-------------+-----------+------+
+
+-- 2️⃣ Create View for student details
+CREATE VIEW student_view AS SELECT * FROM student;
+SELECT * FROM student_view;
+
+-- Output:
+-- +------+-------+-----------+----------+
+-- | S_ID | name  | dept_name | tot_cred |
+-- +------+-------+-----------+----------+
+-- | 11   | Neha  | CSE       | 120      |
+-- | 12   | Ravi  | NULL      | 100      |
+-- | 13   | Asha  | IT        | 130      |
+-- +------+-------+-----------+----------+
+
+-- 3️⃣ Rename dept_name → department_name
+ALTER TABLE student RENAME COLUMN dept_name TO department_name;
+DESC student;
+
+-- Output:
+-- +------------------+-------------+------+-----+---------+-------+
+-- | Field            | Type        | Null | Key | Default | Extra |
+-- +------------------+-------------+------+-----+---------+-------+
+-- | S_ID             | int         | NO   | PRI | NULL    |       |
+-- | name             | varchar(50) | NO   |     | NULL    |       |
+-- | department_name  | varchar(50) | YES  |     | NULL    |       |
+-- | tot_cred         | int         | YES  |     | NULL    |       |
+-- +------------------+-------------+------+-----+---------+-------+
+
+-- 4️⃣ Delete students with NULL department
+DELETE FROM student WHERE department_name IS NULL;
+SELECT * FROM student;
+
+-- Output:
+-- +------+-------+----------------+----------+
+-- | S_ID | name  | department_name| tot_cred |
+-- +------+-------+----------------+----------+
+-- | 11   | Neha  | CSE            | 120      |
+-- | 13   | Asha  | IT             | 130      |
+-- +------+-------+----------------+----------+
+
+-- 5️⃣ Instructor salary > 25000
+SELECT name, salary FROM instructor WHERE salary > 25000;
+
+-- Output:
+-- +-------------+--------+
+-- | name        | salary |
+-- +-------------+--------+
+-- | Anjali Shree| 55000  |
+-- | Rohan       | 27000  |
+-- | Sneha       | 62000  |
+-- | Shree Ram   | 40000  |
+-- | Amit        | 30000  |
+-- +-------------+--------+
+
+-- 6️⃣ Update instructor dept_name from CSE to IT
+UPDATE instructor SET dept_name = 'IT' WHERE dept_name = 'CSE';
+SELECT * FROM instructor;
+
+-- Output:
+-- +------+-------------+-----------+--------+
+-- | T_ID | name        | dept_name | salary |
+-- +------+-------------+-----------+--------+
+-- | 1    | Anjali Shree| Computer  | 55000  |
+-- | 2    | Rohan       | IT        | 27000  |
+-- | 3    | Sneha       | IT        | 62000  |
+-- | 4    | Shree Ram   | Civil     | 40000  |
+-- | 5    | Amit        | Computer  | 30000  |
+-- +------+-------------+-----------+--------+
+
+-- 7️⃣ Create Index on course.dept_name
+CREATE INDEX dept_index ON course(dept_name);
+SELECT dept_name, title FROM course ORDER BY dept_name;
+
+-- Output:
+-- +-----------+--------------------+
+-- | dept_name | title              |
+-- +-----------+--------------------+
+-- | Civil     | Structures         |
+-- | Computer  | Operating Systems  |
+-- | CSE       | DBMS               |
+-- | IT        | Networks           |
+-- +-----------+--------------------+
+
+-- 8️⃣ View combining instructor, course, semester, year
+CREATE VIEW instructor_course AS
+SELECT i.name, i.dept_name, c.title, t.semester, t.year
+FROM instructor i
+JOIN teaches t ON i.T_ID = t.T_ID
+JOIN course c ON c.course_id = t.course_id;
+SELECT * FROM instructor_course;
+
+-- Output:
+-- +-------------+-----------+--------------------+-----------+------+
+-- | name        | dept_name | title              | semester  | year |
+-- +-------------+-----------+--------------------+-----------+------+
+-- | Anjali Shree| Computer  | DBMS               | First     | 2010 |
+-- | Rohan       | IT        | Networks           | Fifth     | 2014 |
+-- | Sneha       | IT        | Operating Systems  | First     | 2010 |
+-- | Shree Ram   | Civil     | Structures         | Fifth     | 2014 |
+-- +-------------+-----------+--------------------+-----------+------+
+
+-- 9️⃣ Instructor salary between 30000 and 60000 (descending)
+SELECT name, salary FROM instructor
+WHERE salary BETWEEN 30000 AND 60000
+ORDER BY salary DESC;
+
+-- Output:
+-- +-------------+--------+
+-- | name        | salary |
+-- +-------------+--------+
+-- | Anjali Shree| 55000  |
+-- | Shree Ram   | 40000  |
+-- | Amit        | 30000  |
+-- +-------------+--------+
+
+-- 🔟 Avg, Min, Max salary in each department
+SELECT dept_name,
+       AVG(salary) AS avg_salary,
+       MIN(salary) AS min_salary,
+       MAX(salary) AS max_salary
+FROM instructor
+GROUP BY dept_name;
+
+-- Output:
+-- +-----------+------------+------------+------------+
+-- | dept_name | avg_salary | min_salary | max_salary |
+-- +-----------+------------+------------+------------+
+-- | Computer  | 42500.00   | 30000      | 55000      |
+-- | IT        | 44500.00   | 27000      | 62000      |
+-- | Civil     | 40000.00   | 40000      | 40000      |
+-- +-----------+------------+------------+------------+
+
+-- 11️⃣ Instructor who teaches course_id 101
+SELECT i.name, i.dept_name, i.salary
+FROM instructor i
+JOIN teaches t ON i.T_ID = t.T_ID
+WHERE t.course_id = 101;
+
+-- Output:
+-- +-------------+-----------+--------+
+-- | name        | dept_name | salary |
+-- +-------------+-----------+--------+
+-- | Anjali Shree| Computer  | 55000  |
+-- +-------------+-----------+--------+
+
+-- 12️⃣ Instructor dept whose avg salary > 60000
+SELECT dept_name, AVG(salary) AS avg_salary
+FROM instructor
+GROUP BY dept_name
+HAVING AVG(salary) > 60000;
+
+-- Output:
+-- Empty set (no dept above 60000)
+
+-- 13️⃣ Total number of instructors teaching in First sem 2010
+SELECT COUNT(DISTINCT T_ID) AS total_instructors
+FROM teaches
+WHERE semester = 'First' AND year = 2010;
+
+-- Output:
+-- +-------------------+
+-- | total_instructors |
+-- +-------------------+
+-- | 2                 |
+-- +-------------------+
+
+-- 14️⃣ Instructors from Computer dept whose name includes 'shree'
+SELECT name FROM instructor
+WHERE dept_name = 'Computer' AND name LIKE '%shree%';
+
+-- Output:
+-- +-------------+
+-- | name        |
+-- +-------------+
+-- | Anjali Shree|
+-- +-------------+
+
+-- 15️⃣ Instructors with salary > avg salary of Civil dept
+SELECT name, salary FROM instructor
+WHERE salary > (
+  SELECT AVG(salary) FROM instructor WHERE dept_name = 'Civil'
+);
+
+-- Output:
+-- +-------------+--------+
+-- | name        | salary |
+-- +-------------+--------+
+-- | Anjali Shree| 55000  |
+-- | Sneha       | 62000  |
+-- +-------------+--------+
+
+-- 16️⃣ Courses taught in Fifth sem 2014 or First sem 2010 or both
+SELECT DISTINCT c.title, t.semester, t.year
+FROM teaches t
+JOIN course c ON t.course_id = c.course_id
+WHERE (t.semester = 'Fifth' AND t.year = 2014)
+   OR (t.semester = 'First' AND t.year = 2010);
+
+-- Output:
+-- +--------------------+-----------+------+
+-- | title              | semester  | year |
+-- +--------------------+-----------+------+
+-- | DBMS               | First     | 2010 |
+-- | Operating Systems  | First     | 2010 |
+-- | Networks           | Fifth     | 2014 |
+-- | Structures         | Fifth     | 2014 |
+-- +--------------------+-----------+------+
+
+💡 i. Find the average salary of instructors in those departments where the average salary is more than ₹42,000
+SELECT dept_name, AVG(salary) AS avg_salary
+FROM instructor
+GROUP BY dept_name
+HAVING AVG(salary) > 42000;
+
+
+📊 Output:
+
+dept_name	avg_salary
+Computer	42500.00
+IT	44500.00
+
+🧠 Explanation:
+The query groups instructors by department, finds average salary, and then filters those departments whose average salary > ₹42,000.
+
+💡 ii. Increase the salary of each instructor in the Computer department by 10%
+UPDATE instructor
+SET salary = salary * 1.10
+WHERE dept_name = 'Computer';
+
+SELECT * FROM instructor;
+
+
+📊 Output (after update):
+
+T_ID	name	dept_name	salary
+1	Anjali Shree	Computer	60500
+2	Rohan	IT	27000
+3	Sneha	IT	62000
+4	Shree Ram	Civil	40000
+5	Amit	Computer	33000
+
+🧠 Explanation:
+All instructors from “Computer” department got a 10% increment in salary.
+
+💡 iii. Find names of instructors whose names are neither ‘Amol’ nor ‘Amit’
+SELECT name
+FROM instructor
+WHERE name NOT IN ('Amol', 'Amit');
+
+
+📊 Output:
+
+name
+Anjali Shree
+Rohan
+Sneha
+Shree Ram
+
+🧠 Explanation:
+Removes instructors whose names are exactly “Amol” or “Amit”.
+
+💡 iv. Find names of students which contain ‘am’ as substring
+SELECT name
+FROM student
+WHERE name LIKE '%am%';
+
+
+📊 Output (example):
+
+name
+(No match in current data)
+
+🧠 Explanation:
+This looks for names containing “am”.
+If you insert a new student like 'Ramya', she’ll appear in output:
+
+INSERT INTO student VALUES (14, 'Ramya', 'IT', 120);
+
+
+Then output:
+
+name
+Ramya
+💡 v. Find names of students from Computer department that take ‘DBMS’ course
+
+👉 Let’s assume we have an enrollment (student-course) mapping table (since right now we don’t).
+We’ll first create and fill a simple table for demo purposes:
+
+CREATE TABLE takes (
+    S_ID INT,
+    course_id INT,
+    FOREIGN KEY (S_ID) REFERENCES student(S_ID) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES course(course_id) ON DELETE CASCADE
+);
+
+INSERT INTO takes VALUES
+(11, 101),   -- Neha (CSE) takes DBMS
+(13, 102);   -- Asha (IT) takes Networks
+
+
+Now the query 👇
+
+SELECT s.name
+FROM student s
+JOIN takes tk ON s.S_ID = tk.S_ID
+JOIN course c ON tk.course_id = c.course_id
+WHERE s.department_name = 'Computer' AND c.title = 'DBMS';
+
+
+📊 Output:
+
+name
+(No match yet, since no Computer student takes DBMS in sample)
+
+If we add a Computer student:
+
+INSERT INTO student VALUES (15, 'Komal', 'Computer', 110);
+INSERT INTO takes VALUES (15, 101);
+
+
+Then output becomes:
+
+name
+Komal
+
+🧠 Explanation:
+It finds Computer-department students enrolled in the “DBMS” course by joining student, takes, and course tables.

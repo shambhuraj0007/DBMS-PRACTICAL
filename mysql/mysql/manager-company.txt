@@ -1,0 +1,149 @@
+-- =======================================================
+-- DATABASE CREATION
+-- =======================================================
+CREATE DATABASE company_db;
+USE company_db;
+
+-- =======================================================
+-- TABLE CREATION WITH CONSTRAINTS
+-- =======================================================
+CREATE TABLE Emp (
+    emp_id INT PRIMARY KEY,
+    ename VARCHAR(50) NOT NULL,
+    street VARCHAR(100),
+    city VARCHAR(50)
+);
+
+CREATE TABLE Company (
+    c_id INT PRIMARY KEY,
+    cname VARCHAR(50) UNIQUE,
+    city VARCHAR(50)
+);
+
+CREATE TABLE Works (
+    emp_id INT,
+    c_id INT,
+    ename VARCHAR(50),
+    cname VARCHAR(50),
+    sal DECIMAL(10,2) CHECK (sal >= 0),
+    FOREIGN KEY (emp_id) REFERENCES Emp(emp_id) ON DELETE CASCADE,
+    FOREIGN KEY (c_id) REFERENCES Company(c_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Manager (
+    mgr_id INT PRIMARY KEY,
+    mgrname VARCHAR(50)
+);
+
+-- =======================================================
+-- INSERT SAMPLE DATA
+-- =======================================================
+INSERT INTO Emp VALUES
+(1, 'Anjali', 'MG Road', 'Pune'),
+(2, 'Rohan', 'Camp', 'Mumbai'),
+(3, 'Sneha', 'Baner', 'Pune'),
+(4, 'Amit', 'Deccan', 'Delhi'),
+(5, 'Suresh', 'Shivajinagar', 'Pune');
+
+INSERT INTO Company VALUES
+(101, 'ABC', 'Mumbai'),
+(102, 'Bosch', 'Pune'),
+(103, 'SBC Company', 'Delhi'),
+(104, 'MBank', 'Hyderabad');
+
+INSERT INTO Works VALUES
+(1, 101, 'Anjali', 'ABC', 25000),
+(2, 102, 'Rohan', 'Bosch', 18000),
+(3, 102, 'Sneha', 'Bosch', 32000),
+(4, 103, 'Amit', 'SBC Company', 60000),
+(5, 104, 'Suresh', 'MBank', 21000);
+
+INSERT INTO Manager VALUES
+(201, 'Suresh'),
+(202, 'Sneha'),
+(203, 'Anjali');
+
+-- =======================================================
+-- i. Modify the database so that company 'ABC' is now in Pune
+-- =======================================================
+UPDATE Company
+SET city = 'Pune'
+WHERE cname = 'ABC';
+
+SELECT * FROM Company;
+
+-- OUTPUT:
+-- +------+-------------+------------+
+-- | c_id | cname       | city       |
+-- +------+-------------+------------+
+-- | 101  | ABC         | Pune       |
+-- | 102  | Bosch       | Pune       |
+-- | 103  | SBC Company | Delhi      |
+-- | 104  | MBank       | Hyderabad  |
+-- +------+-------------+------------+
+
+-- =======================================================
+-- ii. Give all managers of MBank a 10% raise.
+--     If salary > 20000, give only 3% raise.
+-- =======================================================
+UPDATE Works
+SET sal = CASE
+             WHEN sal > 20000 THEN sal * 1.03
+             ELSE sal * 1.10
+          END
+WHERE cname = 'MBank'
+AND ename IN (SELECT mgrname FROM Manager);
+
+SELECT * FROM Works;
+
+-- OUTPUT:
+-- +--------+------+--------+-------------+--------+
+-- | emp_id | c_id | ename  | cname       | sal    |
+-- +--------+------+--------+-------------+--------+
+-- | 1      | 101  | Anjali | ABC         | 25000.00 |
+-- | 2      | 102  | Rohan  | Bosch       | 18000.00 |
+-- | 3      | 102  | Sneha  | Bosch       | 32000.00 |
+-- | 4      | 103  | Amit   | SBC Company | 60000.00 |
+-- | 5      | 104  | Suresh | MBank       | 21630.00 |
+-- +--------+------+--------+-------------+--------+
+
+-- (Suresh from MBank got 3% raise from 21000 → 21630)
+
+-- =======================================================
+-- iii. Find names of all employees who work in Bosch company in Pune
+-- =======================================================
+SELECT e.ename
+FROM Emp e
+JOIN Works w ON e.emp_id = w.emp_id
+JOIN Company c ON w.c_id = c.c_id
+WHERE c.cname = 'Bosch' AND c.city = 'Pune';
+
+-- OUTPUT:
+-- +--------+
+-- | ename  |
+-- +--------+
+-- | Rohan  |
+-- | Sneha  |
+-- +--------+
+
+-- (Both work at Bosch in Pune)
+
+-- =======================================================
+-- iv. Delete all records in Works for employees of 'SBC Company' whose salary > 50000
+-- =======================================================
+DELETE FROM Works
+WHERE cname = 'SBC Company' AND sal > 50000;
+
+SELECT * FROM Works;
+
+-- OUTPUT:
+-- +--------+------+--------+-------------+--------+
+-- | emp_id | c_id | ename  | cname       | sal    |
+-- +--------+------+--------+-------------+--------+
+-- | 1      | 101  | Anjali | ABC         | 25000.00 |
+-- | 2      | 102  | Rohan  | Bosch       | 18000.00 |
+-- | 3      | 102  | Sneha  | Bosch       | 32000.00 |
+-- | 5      | 104  | Suresh | MBank       | 21630.00 |
+-- +--------+------+--------+-------------+--------+
+
+-- (Amit's record removed since SBC Company salary > 50,000)

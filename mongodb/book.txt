@@ -1,0 +1,71 @@
+//Collection “books” which contains the documents given as 
+//below(Perform on Mongo Terminal) { } name: “understanding JAVA” pages:400 -using MapReduce, 
+//categerize books into small books and big books, based on number of pages display and categorize total number of books. 
+
+
+use bookstore; 
+
+ 
+
+ 
+
+db.books.insertMany([ { name: "Understanding JAVA", pages: 400 }, { name: "Python Basics", pages: 150 }, 
+{ name: "Advanced Python", pages: 600 }, { name: "JavaScript Guide", pages: 250 },
+ { name: "MongoDB Tutorial", pages: 180 }, { name: "Data Structures", pages: 550 }, 
+ { name: "Web Development", pages: 300 }, { name: "C++ Programming", pages: 100 } ]); 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+// Define Map function 
+
+var mapFunction = function() { 
+
+  if (this.pages <= 300) { 
+
+    emit("Small Books", 1); 
+
+  } else { 
+
+    emit("Big Books", 1); 
+
+  } 
+
+}; 
+
+  
+
+// Define Reduce function 
+
+var reduceFunction = function(category, counts) { 
+
+  return Array.sum(counts); 
+
+}; 
+
+  
+
+// Execute MapReduce 
+
+db.books.mapReduce( 
+
+  mapFunction, 
+
+  reduceFunction, 
+
+  { out: "book_categories" } 
+
+); 
+
+ 
+
+// Display the categorized results 
+
+db.book_categories.find().pretty(); 

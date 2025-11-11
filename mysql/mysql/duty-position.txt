@@ -1,0 +1,133 @@
+-- =======================================================
+-- DATABASE CREATION
+-- =======================================================
+CREATE DATABASE duty_management;
+USE duty_management;
+
+-- =======================================================
+-- TABLE CREATION WITH CONSTRAINTS
+-- =======================================================
+CREATE TABLE Empl (
+    e_no INT PRIMARY KEY,
+    e_name VARCHAR(50) NOT NULL,
+    post VARCHAR(50),
+    pay_rate DECIMAL(10,2) CHECK (pay_rate > 0)
+);
+
+CREATE TABLE Position (
+    pos_no INT PRIMARY KEY,
+    post VARCHAR(50) UNIQUE NOT NULL
+);
+
+CREATE TABLE Duty_alloc (
+    pos_no INT,
+    e_no INT,
+    month VARCHAR(20),
+    year INT,
+    shift VARCHAR(20),
+    FOREIGN KEY (pos_no) REFERENCES Position(pos_no) ON DELETE CASCADE,
+    FOREIGN KEY (e_no) REFERENCES Empl(e_no) ON DELETE CASCADE
+);
+
+-- =======================================================
+-- INSERT SAMPLE DATA
+-- =======================================================
+INSERT INTO Position VALUES
+(1, 'Manager'),
+(2, 'Engineer'),
+(3, 'Technician');
+
+INSERT INTO Empl VALUES
+(101, 'Sachin', 'Manager', 50000),
+(102, 'Ravi', 'Engineer', 40000),
+(103, 'Anjali', 'Technician', 30000),
+(104, 'Sneha', 'Manager', 55000),
+(123, 'Rohan', 'Engineer', 42000),
+(125, 'Amit', 'Manager', 48000);
+
+INSERT INTO Duty_alloc VALUES
+(1, 101, 'April', 2003, 'First'),
+(2, 102, 'April', 2003, 'Second'),
+(3, 103, 'April', 2003, 'First'),
+(1, 104, 'April', 2003, 'Third'),
+(2, 123, 'April', 2003, 'First'),
+(1, 125, 'May', 2003, 'First');
+
+-- =======================================================
+-- i. Get duty allocation details for e_no 123 
+--    for the first shift in the month of April 2003
+-- =======================================================
+SELECT * 
+FROM Duty_alloc
+WHERE e_no = 123 AND shift = 'First' AND month = 'April' AND year = 2003;
+
+-- OUTPUT:
+-- +--------+------+-------+------+--------+
+-- | pos_no | e_no | month | year | shift  |
+-- +--------+------+-------+------+--------+
+-- | 2      | 123  | April | 2003 | First  |
+-- +--------+------+-------+------+--------+
+
+-- (Employee 123, Rohan, has first shift in April 2003)
+
+-- =======================================================
+-- ii. Get employees whose pay_rate >= pay_rate of 'Sachin'
+-- =======================================================
+SELECT e_name, post, pay_rate
+FROM Empl
+WHERE pay_rate >= (
+    SELECT pay_rate FROM Empl WHERE e_name = 'Sachin'
+);
+
+-- OUTPUT:
+-- +--------+----------+----------+
+-- | e_name | post     | pay_rate |
+-- +--------+----------+----------+
+-- | Sachin | Manager  | 50000.00 |
+-- | Sneha  | Manager  | 55000.00 |
+-- +--------+----------+----------+
+
+-- (Managers earning >= Sachin)
+
+-- =======================================================
+-- iii. Create a view displaying MIN, MAX, and AVG salary per post
+-- =======================================================
+CREATE VIEW post_salary_stats AS
+SELECT post,
+       MIN(pay_rate) AS Min_Salary,
+       MAX(pay_rate) AS Max_Salary,
+       AVG(pay_rate) AS Avg_Salary
+FROM Empl
+GROUP BY post;
+
+SELECT * FROM post_salary_stats;
+
+-- OUTPUT:
+-- +------------+------------+------------+------------+
+-- | post       | Min_Salary | Max_Salary | Avg_Salary |
+-- +------------+------------+------------+------------+
+-- | Engineer   | 40000.00   | 42000.00   | 41000.00   |
+-- | Manager    | 48000.00   | 55000.00   | 51000.00   |
+-- | Technician | 30000.00   | 30000.00   | 30000.00   |
+-- +------------+------------+------------+------------+
+
+-- (Shows salary summary for all posts)
+
+-- =======================================================
+-- iv. Get a count of different employees on each shift having post 'Manager'
+-- =======================================================
+SELECT d.shift, COUNT(DISTINCT e.e_no) AS Total_Managers
+FROM Duty_alloc d
+JOIN Empl e ON d.e_no = e.e_no
+WHERE e.post = 'Manager'
+GROUP BY d.shift;
+
+-- OUTPUT:
+-- +--------+----------------+
+-- | shift  | Total_Managers |
+-- +--------+----------------+
+-- | First  | 1              |
+-- | Third  | 1              |
+-- +--------+----------------+
+
+-- (One manager per shift: Amit in First, Sneha in Third)

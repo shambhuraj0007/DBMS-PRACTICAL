@@ -1,0 +1,155 @@
+-- Create instructor table
+CREATE TABLE instructor (
+    T_ID VARCHAR(10) PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    dept_name VARCHAR(30),
+    salary DECIMAL(10, 2)
+);
+
+-- Create course table
+CREATE TABLE course (
+    course_id VARCHAR(10) PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    dept_name VARCHAR(30),
+    credits INT
+);
+
+-- Create section table
+CREATE TABLE section (
+    course_id VARCHAR(10),
+    sec_id VARCHAR(10),
+    semester VARCHAR(10),
+    year INT,
+    building VARCHAR(30),
+    room_no VARCHAR(10),
+    PRIMARY KEY (course_id, sec_id, semester, year),
+    FOREIGN KEY (course_id) REFERENCES course(course_id)
+);
+
+-- Create teaches table
+CREATE TABLE teaches (
+    T_ID VARCHAR(10),
+    course_id VARCHAR(10),
+    sec_id VARCHAR(10),
+    semester VARCHAR(10),
+    year INT,
+    PRIMARY KEY (T_ID, course_id, sec_id, semester, year),
+    FOREIGN KEY (T_ID) REFERENCES instructor(T_ID),
+    FOREIGN KEY (course_id, sec_id, semester, year) 
+        REFERENCES section(course_id, sec_id, semester, year)
+);
+
+-- ============================================
+-- DATA INSERTION
+-- ============================================
+
+-- Insert data into instructor table
+INSERT INTO instructor (T_ID, name, dept_name, salary) VALUES
+('T001', 'Dr. Rajesh Kumar', 'Computer Science', 75000.00),
+('T002', 'Dr. Priya Sharma', 'Computer Science', 45000.00),
+('T003', 'Dr. Amit Patel', 'Mathematics', 55000.00),
+('T004', 'Dr. Sneha Reddy', 'Physics', 35000.00),
+('T005', 'Dr. Vikram Singh', 'Computer Science', 85000.00),
+('T006', 'Dr. Anita Desai', 'Mathematics', 42000.00),
+('T007', 'Dr. Rohan Mehta', 'Physics', 65000.00),
+('T008', 'Dr. Kavita Joshi', 'Chemistry', 50000.00),
+('T009', 'Dr. Sanjay Gupta', 'Computer Science', 95000.00),
+('T010', 'Dr. Neha Agarwal', 'Mathematics', 38000.00);
+
+-- Insert data into course table
+INSERT INTO course (course_id, title, dept_name, credits) VALUES
+('101', 'Introduction to Programming', 'Computer Science', 4),
+('102', 'Data Structures', 'Computer Science', 4),
+('103', 'Database Management Systems', 'Computer Science', 3),
+('201', 'Calculus I', 'Mathematics', 4),
+('202', 'Linear Algebra', 'Mathematics', 3),
+('301', 'Classical Mechanics', 'Physics', 3),
+('302', 'Quantum Physics', 'Physics', 4),
+('401', 'Organic Chemistry', 'Chemistry', 3);
+
+-- Insert data into section table
+INSERT INTO section (course_id, sec_id, semester, year, building, room_no) VALUES
+('101', 'S1', 'Fall', 2024, 'Building A', '101'),
+('101', 'S2', 'Spring', 2024, 'Building A', '102'),
+('102', 'S1', 'Fall', 2024, 'Building B', '201'),
+('103', 'S1', 'Fall', 2024, 'Building C', '301'),
+('201', 'S1', 'Spring', 2024, 'Building D', '101'),
+('202', 'S1', 'Fall', 2024, 'Building D', '102'),
+('301', 'S1', 'Fall', 2024, 'Building E', '201'),
+('302', 'S1', 'Spring', 2024, 'Building E', '202'),
+('401', 'S1', 'Fall', 2024, 'Building F', '101');
+
+-- Insert data into teaches table
+INSERT INTO teaches (T_ID, course_id, sec_id, semester, year) VALUES
+('T001', '101', 'S1', 'Fall', 2024),
+('T002', '101', 'S2', 'Spring', 2024),
+('T002', '102', 'S1', 'Fall', 2024),
+('T005', '103', 'S1', 'Fall', 2024),
+('T003', '201', 'S1', 'Spring', 2024),
+('T006', '202', 'S1', 'Fall', 2024),
+('T004', '301', 'S1', 'Fall', 2024),
+('T007', '302', 'S1', 'Spring', 2024),
+('T008', '401', 'S1', 'Fall', 2024),
+('T009', '101', 'S1', 'Fall', 2024);
+
+
+-- ============================================
+-- QUERY i: Display the name of the instructor whose salary 
+-- is between 30000 and 60000 in descending order
+-- ============================================
+
+SELECT name, salary
+FROM instructor
+WHERE salary BETWEEN 30000 AND 60000
+ORDER BY salary DESC;
+
+
+
+
+-- ============================================
+-- QUERY ii: Find the average, minimum, maximum salary 
+-- in each department
+-- ============================================
+
+SELECT 
+    dept_name,
+    AVG(salary) AS average_salary,
+    MIN(salary) AS minimum_salary,
+    MAX(salary) AS maximum_salary
+FROM instructor
+GROUP BY dept_name
+ORDER BY dept_name;
+
+
+
+
+-- ============================================
+-- QUERY iii: Display the name of the instructor, 
+-- his department name and salary who teaches course_id: 101
+-- ============================================
+
+SELECT DISTINCT 
+    i.name,
+    i.dept_name,
+    i.salary
+FROM instructor i
+JOIN teaches t ON i.T_ID = t.T_ID
+WHERE t.course_id = '101';
+
+
+
+
+-- ============================================
+-- QUERY iv: Find the name of the instructor whose 
+-- average salary is greater than 60000
+-- ============================================
+
+-- Method 1: Using subquery with average salary comparison
+SELECT name, salary
+FROM instructor
+WHERE salary > (
+    SELECT AVG(salary)
+    FROM instructor
+)
+AND salary > 60000
+ORDER BY salary DESC;
