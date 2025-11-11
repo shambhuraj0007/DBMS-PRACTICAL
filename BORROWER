@@ -1,0 +1,165 @@
+
+  CREATE TABLE BORROWER (
+      Roll_Number INT,
+      Name VARCHAR(20),
+      Date_of_issue DATE,
+      Book_name VARCHAR(20),
+      Status CHAR(1)
+ );
+CREATE TABLE BORROWER (
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object
+
+
+  DROP TABLE BORROWER;
+
+Table dropped.
+
+  CREATE TABLE BORROWER (
+  2      Roll_Number INT,
+  3      Name VARCHAR(20),
+  4      Date_of_issue DATE,
+  5      Book_name VARCHAR(20),
+  6      Status CHAR(1)
+  7  );
+
+Table created.
+
+  CREATE TABLE Fine (
+    Roll_no INT,
+      Sys_date DATE,
+      Fine INT
+);
+CREATE TABLE Fine (
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object
+
+
+  DROP TABLE Fine;
+
+Table dropped.
+
+  CREATE TABLE Fine (
+  2      Roll_no INT,
+  3      Sys_date DATE,
+  4      Fine INT
+  5  );
+
+Table created.
+
+ INSERT INTO BORROWER VALUES(1,'Jay', TO_DATE('18-07-25','DD-MM-RR'),'CNS','i');
+
+
+ INSERT INTO BORROWER VALUES(2,'Rohit', TO_DATE('15-07-25','DD-MM-RR'),'DBMS','i');
+
+
+ INSERT INTO BORROWER VALUES(3,'Rohan', TO_DATE('15-08-25','DD-MM-RR'),'TOC','i');
+
+
+ INSERT INTO BORROWER VALUES(4,'Tejas', TO_DATE('29-07-25','DD-MM-RR'),'SPOS','i');
+
+
+ INSERT INTO BORROWER VALUES(5,'Mahesh', TO_DATE('24-08-25','DD-MM-RR'),'SPOS2','i');
+
+
+  SELECT * FROM BORROWER;
+
+ROLL_NUMBER NAME                 DATE_OF_I BOOK_NAME            S
+----------- -------------------- --------- -------------------- -
+          1 Jay                  18-JUL-25 CNS                  i
+          2 Rohit                15-JUL-25 DBMS                 i
+          3 Rohan                15-AUG-25 TOC                  i
+          4 Tejas                29-JUL-25 SPOS                 i
+          5 Mahesh               24-AUG-25 SPOS2                i
+
+  SET SERVEROUTPUT ON;
+  DECLARE
+        rollno NUMBER;
+        name1 VARCHAR(20);
+        amt INT;
+        doi DATE;
+        system_date DATE;
+        no_of_days NUMBER(20);
+    BEGIN
+        rollno := &Roll_Number;
+       name1 := '&name';
+ 
+       SELECT SYSDATE INTO system_date FROM dual;
+       SELECT date_of_issue INTO doi
+       FROM BORROWER
+       WHERE Roll_Number = rollno AND book_name = name1;
+ 
+       dbms_output.put_line('Date of Issue: ' || doi);
+ 
+       no_of_days := system_date - doi;
+       dbms_output.put_line('No days: ' || no_of_days);
+
+       IF no_of_days > 15 AND no_of_days < 30 THEN
+           amt := no_of_days * 5;
+           dbms_output.put_line('Fine: ' || amt);
+       ELSIF no_of_days > 30 THEN
+           amt := no_of_days * 50;
+           dbms_output.put_line('Fine: ' || amt);
+       ELSE
+           dbms_output.put_line('No fine');
+       END IF;
+ 
+       IF no_of_days > 15 THEN
+           INSERT INTO Fine VALUES(rollno, system_date, amt);
+           UPDATE BORROWER SET status = 'r' WHERE Roll_Number = rollno;
+       END IF;
+ 
+   EXCEPTION
+       WHEN NO_DATA_FOUND THEN
+           dbms_output.put_line(rollno || ' not found in database');
+   END;
+   /
+Enter value for roll_number: 1
+old   9:     rollno := &Roll_Number;
+new   9:     rollno := 1;
+Enter value for name: CNS
+old  10:     name1 := '&name';
+new  10:     name1 := 'CNS';
+Date of Issue: 18-JUL-25
+No days: 90
+Fine: 4500
+
+PL/SQL procedure successfully completed.
+
+  /
+Enter value for roll_number: 2
+old   9:     rollno := &Roll_Number;
+new   9:     rollno := 2;
+Enter value for name: DBMS
+old  10:     name1 := '&name';
+new  10:     name1 := 'DBMS';
+Date of Issue: 15-JUL-25
+No days: 93
+Fine: 4650
+
+PL/SQL procedure successfully completed.
+
+  /
+Enter value for roll_number: 3
+old   9:     rollno := &Roll_Number;
+new   9:     rollno := 3;
+Enter value for name: TOC
+old  10:     name1 := '&name';
+new  10:     name1 := 'TOC';
+Date of Issue: 15-AUG-25
+No days: 62
+Fine: 3100
+
+PL/SQL procedure successfully completed.
+
+  SELECT * FROM Fine;
+
+   ROLL_NO SYS_DATE        FINE
+---------- --------- ----------
+         1 15-OCT-25       4500
+         2 15-OCT-25       4650
+         3 15-OCT-25       3100
+
+ 

@@ -1,0 +1,106 @@
+SET SERVEROUTPUT ON;
+
+DROP TABLE library_audit CASCADE CONSTRAINTS;
+DROP TABLE library_table CASCADE CONSTRAINTS;
+
+CREATE TABLE library_table (
+    book_name VARCHAR2(20) PRIMARY KEY,
+    status    VARCHAR2(20)
+);
+
+CREATE TABLE library_audit (
+    date_Modified DATE,
+    book_name     VARCHAR2(20),
+    old_status    VARCHAR2(20),
+    new_status    VARCHAR2(20),
+    action        VARCHAR2(20)
+);
+
+CREATE OR REPLACE TRIGGER trigger_row_after
+AFTER INSERT OR UPDATE OR DELETE ON library_table
+FOR EACH ROW
+BEGIN
+    IF UPDATING THEN
+        dbms_output.put_line(:OLD.book_name || ' UPDATING');
+        INSERT INTO library_audit
+        VALUES (SYSDATE, :OLD.book_name, :OLD.status, :NEW.status, 'UPDATE');
+       
+    ELSIF INSERTING THEN  
+        dbms_output.put_line(:NEW.book_name || ' INSERTING');
+        INSERT INTO library_audit
+        VALUES (SYSDATE, :NEW.book_name, NULL, :NEW.status, 'INSERT');
+       
+    ELSIF DELETING THEN
+        dbms_output.put_line(:OLD.book_name || ' DELETING');
+        INSERT INTO library_audit
+        VALUES (SYSDATE, :OLD.book_name, :OLD.status, NULL, 'DELETE');
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trigger_row_before
+BEFORE UPDATE ON library_table
+FOR EACH ROW
+BEGIN
+    IF :NEW.status NOT IN ('AVAILABLE', 'UNAVAILABLE') THEN
+        raise_application_error(-20001, 'Invalid status value');
+    END IF;
+    
+    dbms_output.put_line('BEFORE: ' || :OLD.book_name || 
+                        ' changing from ' || :OLD.status || 
+                        ' to ' || :NEW.status);
+END;
+/
+
+CREATE OR REPLACE TRIGGER trigger_statement_after
+AFTER UPDATE OR DELETE ON library_table
+BEGIN
+    dbms_output.put_line('STATEMENT-LEVEL AFTER: Operation completed at ' || 
+                        TO_CHAR(SYSDATE, 'DD-MON-YY HH24:MI:SS'));
+    
+    INSERT INTO library_audit
+    VALUES (SYSDATE, 'STATEMENT_LEVEL', NULL, NULL, 'AFTER_STATEMENT');
+END;
+/
+
+CREATE OR REPLACE TRIGGER trigger_statement_before
+BEFORE DELETE ON library_table
+BEGIN
+    dbms_output.put_line('STATEMENT-LEVEL BEFORE: Delete operation initiated');
+    
+    IF TO_CHAR(SYSDATE, 'DY') IN ('SAT', 'SUN') THEN
+        raise_application_error(-20002, 'Deletions not allowed on weekends');
+    END IF;
+END;
+/
+
+INSERT INTO library_table VALUES ('DBMS', 'AVAILABLE');
+INSERT INTO library_table VALUES ('CNS', 'UNAVAILABLE');
+INSERT INTO library_table VALUES ('SPOS', 'AVAILABLE');
+INSERT INTO library_table VALUES ('TOC', 'AVAILABLE');
+COMMIT;
+
+INSERT INTO library_table VALUES ('M1', 'AVAILABLE');
+
+SELECT * FROM library_table;
+
+UPDATE library_table SET status='UNAVAILABLE' WHERE book_name='M1';
+
+SELECT * FROM library_table;
+
+DELETE FROM library_table WHERE book_name='M1';
+
+SELECT * FROM library_table;
+
+--Triggers are stored procedures that automatically execute when specific database events occur 
+--(INSERT, UPDATE, DELETE). The timing of when they execute—BEFORE or AFTER the triggering statement—is crucial 
+for different use cases.​
+| Aspect                | BEFORE Trigger                | AFTER Trigger                        |
+| --------------------- | ----------------------------- | ------------------------------------ |
+| Execution Timing      | Before DML operation executes | After DML operation completes        |
+| Can Modify Data       | Yes - can change:NEWvalues    | No - data is read-only               |
+| Can Prevent Operation | Yes - raise error to stop it  | No - operation already happened      |
+| Primary Use           | Validation, data modification | Logging, auditing, cascading updates |
+| Access to Row ID      | No - row not written yet      | Yes - row is on disk                 |
+| Locks Rows            | No                            | Yes                                  |
+

@@ -1,0 +1,105 @@
+SET SERVEROUTPUT ON;
+
+DROP TABLE result CASCADE CONSTRAINTS;
+DROP TABLE stud_marks CASCADE CONSTRAINTS;
+
+CREATE TABLE result(
+    roll_number NUMBER,
+    name VARCHAR2(25),
+    class VARCHAR(30)
+);
+
+CREATE TABLE stud_marks(
+    roll_number NUMBER,
+    name VARCHAR2(25),
+    total_marks NUMBER
+);
+
+CREATE OR REPLACE PROCEDURE procedure_1(
+    roll_no IN NUMBER,
+    name IN VARCHAR2,
+    marks IN NUMBER
+) AS
+BEGIN
+    IF (marks<=1500 AND marks>=990) THEN
+        DBMS_OUTPUT.PUT_LINE('DISTINCTION');
+        INSERT INTO result VALUES(roll_no, name, 'DISTINCTION');
+    ELSIF (marks<=989 AND marks>=900) THEN
+        DBMS_OUTPUT.PUT_LINE('FIRST CLASS');
+        INSERT INTO result VALUES(roll_no, name, 'FIRST CLASS');
+    ELSIF (marks<=899 AND marks>=825) THEN
+        DBMS_OUTPUT.PUT_LINE('HIGHER SECOND CLASS');
+        INSERT INTO result VALUES(roll_no, name, 'HIGHER SECOND CLASS');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('FAIL');
+        INSERT INTO result VALUES(roll_no, name, 'FAIL');
+    END IF;
+    INSERT INTO stud_marks VALUES(roll_no, name, marks);
+END procedure_1;
+/
+DECLARE
+    name1 VARCHAR2(25);
+    roll_no_1 NUMBER;
+    marks_1 NUMBER;
+BEGIN
+    roll_no_1 := &roll_no_1;
+    name1 := '&name1';
+    marks_1 := &marks_1;
+    procedure_1(roll_no_1, name1, marks_1);
+END;
+/
+-------------------------------------------------// enter the inputs when prompted
+--------------------------------------------------// and use / for further input
+SELECT * FROM result;
+SELECT * FROM stud_marks;
+CREATE OR REPLACE FUNCTION func_result(
+    roll_no IN NUMBER,
+    name IN VARCHAR2,
+    marks IN NUMBER
+) RETURN VARCHAR2 AS
+    grade VARCHAR2(30);
+BEGIN
+    IF (marks<=1500 AND marks>=990) THEN
+        grade := 'DISTINCTION';
+        DBMS_OUTPUT.PUT_LINE('DISTINCTION');
+    ELSIF (marks<=989 AND marks>=900) THEN
+        grade := 'FIRST CLASS';
+        DBMS_OUTPUT.PUT_LINE('FIRST CLASS');
+    ELSIF (marks<=899 AND marks>=825) THEN
+        grade := 'HIGHER SECOND CLASS';
+        DBMS_OUTPUT.PUT_LINE('HIGHER SECOND CLASS');
+    ELSE
+        grade := 'FAIL';
+        DBMS_OUTPUT.PUT_LINE('FAIL');
+    END IF;
+    INSERT INTO stud_marks VALUES(roll_no, name, marks);
+    RETURN grade;
+END func_result;
+/
+DECLARE
+    name1 VARCHAR2(25);
+    roll_no_1 NUMBER;
+    marks_1 NUMBER;
+    grade VARCHAR2(25);
+BEGIN
+    roll_no_1 := &roll_no;
+    name1 := '&name';
+    marks_1 := &marks;
+    grade := func_result(roll_no_1, name1, marks_1);
+    INSERT INTO result VALUES(roll_no_1, name1, grade);
+END;
+/
+--when prompted enter the inputs
+--use / for further input
+
+SELECT * FROM result ORDER BY roll_number;
+SELECT * FROM stud_marks ORDER BY roll_number;
+| Aspect         | Procedure                             | Function                                      |
+| -------------- | ------------------------------------- | --------------------------------------------- |
+| Return Value   | Does not return a value               | Must return a single value                    |
+| RETURN Keyword | Not used                              | Mandatory                                     |
+| Call Method    | Called as standalone statement        | Called in expressions, can assign to variable |
+| Use in SQL     | Cannot be used in SELECT statements   | Can be used in SELECT, WHERE clauses          |
+| Purpose        | Execute business logic, perform tasks | Perform calculations and return results       |
+| DML Statements | Can freely use INSERT, UPDATE, DELETE | Can use DML but with restrictions             |
+| Try-Catch      | Supports exception handling           | Limited exception handling support            |
