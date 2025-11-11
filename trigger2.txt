@@ -1,0 +1,35 @@
+SET SERVEROUTPUT ON;
+
+CREATE TABLE Library(bookName VARCHAR2(20),Status VARCHAR2(20));
+
+INSERT INTO Library VALUES ('DBMS','AVAILABLE'),('CNS','NOT AVAILABLE'),('SPOS','AVAILABLE'),('TOC','AVAILABLE');
+
+CREATE TABLE Library_Audit(date_Modified DATE,book_name VARCHAR2(10),old_Status VARCHAR2(50),new_status VARCHAR2(50),action  VARCHAR2(10));
+
+select * from Library;
+
+CREATE OR REPLACE TRIGGER trigger1
+AFTER INSERT OR UPDATE OR DELETE 
+ON Library
+FOR EACH row
+BEGIN
+  IF UPDATING THEN 
+    dbms_output.put_line('UPDATING');
+    INSERT INTO Library_Audit VALUES (SYSDATE,:OLD.bookName,:OLD.Status,:NEW.Status,'Update');
+  ELSIF DELETING THEN 
+    dbms_output.put_line('DELETING');
+    INSERT INTO Library_Audit VALUES (SYSDATE,:OLD.bookName,:OLD.Status,'-','Delete');
+  else
+    dbms_output.put_line('INSERTING');
+    INSERT INTO Library_Audit VALUES (SYSDATE,:NEW.bookName,'-','AVAILABLE','Insert');
+  END IF;
+END;
+/
+
+UPDATE Library set Status='NOT AVAILABLE' where bookName='DBMS';    
+
+INSERT INTO Library VALUES ('m1','AVAILABLE');
+
+Delete from Library where bookName='CNS' ;
+
+select * from Library_Audit;

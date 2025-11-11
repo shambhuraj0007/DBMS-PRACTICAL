@@ -111,3 +111,22 @@ END;
 
 SELECT * FROM o_rollcall1 ORDER BY rno;
 SELECT * FROM n_rollcall1 ORDER BY rno;
+
+--An explicit cursor is a cursor that you create manually in PL/SQL when a query returns multiple rows.
+You must:
+
+--DECLARE the cursor-OPEN it-FETCH from it- and then close it.
+
+
+--✅ Why do we use explicit cursors?
+
+--To process each row one-by-one from a SELECT query that returns multiple rows.
+
+--What is an Implicit Cursor?
+
+--An implicit cursor is automatically created by Oracle when you execute a SQL statement like
+--You do not declare it.
+--Oracle manages opening, fetching, and closing internally.
+
+--A parameterized explicit cursor is a cursor that accepts parameters, just like a function.
+--This allows the cursor to run the same SQL query with different values each time.
